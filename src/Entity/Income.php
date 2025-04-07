@@ -16,13 +16,22 @@ class Income
 
     #[ORM\Column]
     private ?float $income = null;
-
+/*
     #[ORM\Column(type: Types::DATE_MUTABLE)]
     private ?\DateTimeInterface $dateIncome = null;
-
+*/
     #[ORM\ManyToOne(inversedBy: 'incomes')]
     #[ORM\JoinColumn(nullable: false)]
     private ?BeautySalon $beautySalon = null;
+
+    #[ORM\Column]
+    private ?\DateTimeImmutable $createdAt = null;
+
+    #[ORM\Column]
+    private ?int $monthIncome = null;
+
+    #[ORM\Column]
+    private ?int $yearIncome = null;
 
     public function getId(): ?int
     {
@@ -40,7 +49,7 @@ class Income
 
         return $this;
     }
-
+/*
     public function getDateIncome(): ?\DateTimeInterface
     {
         return $this->dateIncome;
@@ -52,7 +61,7 @@ class Income
 
         return $this;
     }
-
+*/
     public function getBeautySalon(): ?BeautySalon
     {
         return $this->beautySalon;
@@ -61,6 +70,42 @@ class Income
     public function setBeautySalon(?BeautySalon $beautySalon): static
     {
         $this->beautySalon = $beautySalon;
+
+        return $this;
+    }
+
+    public function getCreatedAt(): ?\DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+
+    public function setCreatedAt(\DateTimeImmutable $createdAt): static
+    {
+        $this->createdAt = $createdAt;
+
+        return $this;
+    }
+
+    public function getMonthIncome(): ?int
+    {
+        return $this->monthIncome;
+    }
+
+    public function setMonthIncome(int $monthIncome): static
+    {
+        $this->monthIncome = $monthIncome;
+
+        return $this;
+    }
+
+    public function getYearIncome(): ?int
+    {
+        return $this->yearIncome;
+    }
+
+    public function setYearIncome(int $yearIncome): static
+    {
+        $this->yearIncome = $yearIncome;
 
         return $this;
     }
