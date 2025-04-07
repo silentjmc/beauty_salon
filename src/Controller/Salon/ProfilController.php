@@ -58,7 +58,7 @@ final class ProfilController extends AbstractController{
         ]);
     }
 
-    #[Route('/api/profile', name: 'app_profile_update', methods: ['PUT'])]
+    #[Route('/api/profile', name: 'app_profile_update', methods: ['PATCH'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function updateProfile(
         Request $request, 
