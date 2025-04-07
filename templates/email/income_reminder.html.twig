@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #4A90E2; color: white; padding: 10px 20px; }
+        .content { padding: 20px; border: 1px solid #ddd; }
+        .footer { font-size: 12px; color: #777; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Reminder: Income Entry Missing</h2>
+        </div>
+        <div class="content">
+            <p>Bonjour <strong>{{ managerName }}</strong>,</p>
+
+            <p>Nous avons remarqué que votre salon <strong>{{ salonName }}</strong> n'a pas soumis de revenus pour <strong>{{ formattedMonth }}</strong>.</p>
+
+            <p>Veuillez vous connecter à votre compte et soumettre les informations relatives au revenu dès que possible afin de maintenir les statistiques à jour.</p>
+
+            <p>Merci de votre attention !<br>– L'équipe BeautyStatistics</p>
+        </div>
+        <div class="footer">
+            <p>Il s'agit d'un message automatisé, veuillez ne pas y répondre.v</p>
+        </div>
+    </div>
+</body>
+</html>
+v

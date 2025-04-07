@@ -1,0 +1,17 @@
+# Éditer le fichier crontab
+$ crontab -e
+
+# Ajouter cette ligne pour exécuter la commande le 5 de chaque mois à 9h du matin
+0 9 5 * * /path_to_symfony_project/bin/console app:send-income-reminders >> /path_to_symfony_project/var/log/reminder_cron.log 2>&1
+
+# Le 12 de chaque mois à 9h
+0 9 12 * * /usr/bin/php /path_to_symfony_project/bin/console app:send-income-reminders >> /path_to_symfony_project/var/log/reminder_cron.log 2>&1
+
+# Le 19 de chaque mois à 9h
+0 9 19 * * /usr/bin/php /path_to_symfony_project/bin/console app:send-income-reminders >> /path_to_symfony_project/var/log/reminder_cron.log 2>&1
+
+# Le 25 de chaque mois à 9h
+0 9 25 * * /usr/bin/php /path_to_symfony_project/bin/console app:send-income-reminders >> /path_to_symfony_project/var/log/reminder_cron.log 2>&1
+
+# Le dernier jour de chaque mois à 9h
+0 9 28-31 * * [ "$(date +\%d -d tomorrow)" == "01" ] && /usr/bin/php /path_to_symfony_project/bin/console app:send-income-reminders >> /path_to_symfony_project/var/log/reminder_cron.log 2>&1
