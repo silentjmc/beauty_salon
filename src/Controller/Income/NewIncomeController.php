@@ -4,6 +4,7 @@ namespace App\Controller\Income;
 
 use App\Entity\BeautySalon;
 use App\Entity\Income;
+use App\Entity\Statistic;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -69,6 +70,11 @@ final class NewIncomeController extends AbstractController{
         $entityManager->persist($income);
         $entityManager->flush();
 
+        // Update the average income for France, salon's department, and salon's region
+        $this->updateAverageIncomeForArea($entityManager, $income, 'France', $month_income, $year_income);
+        $this->updateAverageIncomeForArea($entityManager, $income, 'Department', $month_income, $year_income);
+        $this->updateAverageIncomeForArea($entityManager, $income, 'Region', $month_income, $year_income);
+
         return new JsonResponse([
             'message' => 'Income successfully recorded for ' . $previousMonth->format('m/Y'),
             'income' => [
@@ -80,5 +86,71 @@ final class NewIncomeController extends AbstractController{
                 'salon' => $salon->getName()
             ]
         ], Response::HTTP_CREATED);
+    }
+
+    // This method updates the average income for a specific area (France, Department, or Region)
+    public function updateAverageIncomeForArea(EntityManagerInterface $entityManager, Income $income, string $area, string $month, string $year): void
+    {
+        // Get the beauty salon, department, and region from the income entity
+        $salon = $income->getBeautySalon();
+        $department = $salon->getDepartment();
+        $region = $department->getRegion();
+
+        //List of criteria to find if the average income exists or not
+        $criteria = [
+            'area' => $area,
+            'month' => $month,
+            'year' => $year
+        ];
+
+        if ($area === 'Department') {
+            $criteria['department'] = $department;
+        } elseif ($area === 'Region') {
+            $criteria['region'] = $region;
+        }
+
+        $existingAverageIncome = $entityManager->getRepository(Statistic::class)->findOneBy($criteria);
+
+        // Calculate the average income for the specified area
+        $avgIncome = $entityManager->createQueryBuilder()
+        ->select('AVG(i.income) as avg')
+        ->from(Income::class, 'i')
+        ->join('i.beautySalon', 's')
+        ->where('i.monthIncome = :monthIncome')
+        ->andWhere('i.yearIncome = :yearIncome')
+        ->setParameter('monthIncome', $month)
+        ->setParameter('yearIncome', $year);
+
+        if ($area === 'Department') {
+            $avgIncome->andWhere('s.department = :department')
+                ->setParameter('department', $department);
+        } elseif ($area === 'Region') {
+            $avgIncome->join('s.department', 'd')
+                ->andWhere('d.region = :region')
+                ->setParameter('region', $region);
+        }
+
+        $avgIncome = $avgIncome->getQuery()->getSingleScalarResult();
+
+        // Update or create the average income entry
+        if ($existingAverageIncome) {
+            $existingAverageIncome->setAverageIncome($avgIncome);
+        } else {
+            $stat = new Statistic();
+            $stat->setArea($area);
+            $stat->setMonth($month);
+            $stat->setYear($year);
+            $stat->setAverageIncome($avgIncome);
+    
+            if ($area === 'Department') {
+                $stat->setDepartment($department);
+            } elseif ($area === 'Region') {
+                $stat->setRegion($region);
+            }
+    
+            $entityManager->persist($stat);
+        }
+    
+        $entityManager->flush();
     }
 }
