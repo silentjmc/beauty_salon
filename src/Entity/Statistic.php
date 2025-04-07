@@ -25,9 +25,6 @@ class Statistic
     #[ORM\Column]
     private ?float $averageIncome = null;
 
-    #[ORM\Column]
-    private ?int $countSalon = null;
-
     #[ORM\OneToOne(inversedBy: 'statistic', cascade: ['persist', 'remove'])]
     private ?Department $department = null;
 
@@ -83,18 +80,6 @@ class Statistic
     public function setAverageIncome(float $averageIncome): static
     {
         $this->averageIncome = $averageIncome;
-
-        return $this;
-    }
-
-    public function getCountSalon(): ?int
-    {
-        return $this->countSalon;
-    }
-
-    public function setCountSalon(int $countSalon): static
-    {
-        $this->countSalon = $countSalon;
 
         return $this;
     }
