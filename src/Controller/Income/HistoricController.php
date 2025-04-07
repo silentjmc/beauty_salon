@@ -12,7 +12,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 final class HistoricController extends AbstractController{
-    #[Route('/api/historic', name: 'app_historic_get')]
+    #[Route('/api/historic', name: 'app_historic_get',  methods: ['GET'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function getHistory(EntityManagerInterface $entityManager): JsonResponse{
         $user = $this->getUser();
@@ -29,7 +29,8 @@ final class HistoricController extends AbstractController{
            ->from('App\Entity\Income', 'i')
            ->where('i.beautySalon = :salon')
            ->setParameter('salon', $salon)
-           ->orderBy('i.dateIncome', 'DESC');
+           ->orderBy('i.yearIncome', 'DESC')
+           ->addOrderBy('i.monthIncome', 'DESC');
 
         $incomes = $queryIncome->getQuery()->getResult();
 
@@ -37,8 +38,9 @@ final class HistoricController extends AbstractController{
         foreach ($incomes as $income) {
             $historyData[] = [
                 'id' => $income->getId(),
-                'date' => $income->getDateIncome(),
-                'amount' => $income->getAmount()
+                'month' => $income->getMonthIncome(),
+                'year' => $income->getYearIncome(),
+                'income' => $income->getIncome()
             ];
         }
         return new JsonResponse([
