@@ -2,13 +2,22 @@
 
 namespace App\DataFixtures;
 
+use App\Entity\BeautySalon;
 use App\Entity\Department;
+use App\Entity\Income;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 use App\Entity\Region;
+use App\Entity\Statistic;
+use App\Entity\User;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+
 class AppFixtures extends Fixture
 {
-    public function load(ObjectManager $manager): void
+    public function __construct(private UserPasswordHasherInterface $userPasswordHasher)
+    {
+    }
+    public function load(ObjectManager $objectManager): void
     {
         $regions = [
             'Auvergne-Rhône-Alpes',
@@ -31,11 +40,13 @@ class AppFixtures extends Fixture
             'Provence-Alpes-Côte d\'Azur',
         ];
         $regionEntities = [];
+        $createdRegions = [];
         foreach ($regions as $index => $regionName) {
                     $region = new Region();
                     $region->setName($regionName);
-                    $manager->persist($region);
+                    $objectManager->persist($region);
                     $regionEntities[$index + 1] = $region;
+                    $createdRegions[] = $region;
                 };
 
         $departments = [
@@ -141,19 +152,122 @@ class AppFixtures extends Fixture
             ['Var',	83,	18],
             ['Vaucluse',	84,	18],
         ];
-
+        $createdDepartments = [];
         foreach ($departments as [$name,$code,$regionId]) {
             $department = new Department();
             $department->setName($name);
             $department->setCode($code);
             $department->setRegion($regionEntities[$regionId]);
-            $manager->persist($department);
+            $objectManager->persist($department);
+            $createdDepartments[] = $department;
         };
 
-        $manager->flush();
-        // $product = new Product();
-        // $manager->persist($product);
+        $users = [
+            ['mdubois@example.com', 'marie!D1', ['ROLE_USER'], 'Marie', 'Dubois'],
+            ['jmartin@example.com', 'jean!M02', ['ROLE_USER'], 'Jean', 'Martin'],
+            ['sbernard@example.com', 'sophie!B3', ['ROLE_USER'], 'Sophie', 'Bernard'],
+            ['pmoreau@example.com', 'pierre!M4', ['ROLE_USER'], 'Pierre', 'Moreau'],
+            ['clefevre@example.com', 'claire!L5', ['ROLE_USER'], 'Claire', 'Lefèvre'],      
+        ];
 
+        $createdUsers = [];
+        foreach ($users as [$email, $password, $roles, $firstName, $lastName]) {
+            $user = new User();
+            $user->setEmail($email);
+            $user->setManagerFirstName($firstName);
+            $user->setManagerLastName($lastName);
+            $user->setRoles($roles);
+            $user->setPassword($this->userPasswordHasher->hashPassword($user, $password));
+            $objectManager->persist($user);
+            $createdUsers[] = $user;
+        }
 
+        $beautySalons = [
+            ['L\'Éclat des Sens', '12 Rue des Lilas', '75020', 'Paris', new \DateTime('2020-01-01'), 10, $createdUsers[0], $createdDepartments[50]],
+            ['Evasion Epidermique','34 Rue du Commerce', '69003', 'Lyon', new \DateTime('2020-01-01'), 10, $createdUsers[1], $createdDepartments[9]], 
+            ['Soleil de L\'Est', '8 Place des Halles', '13001', 'Marseille', new \DateTime('2020-01-01'), 10, $createdUsers[2], $createdDepartments[98]],
+            ['La Belle Etoile', '27 Rue de la Paix', '33000', 'Bordeaux', new \DateTime('2020-01-01'), 10, $createdUsers[3], $createdDepartments[70]],
+            ['Eclat de Peau', '15 Rue Montmartre', '06000', 'Nice', new \DateTime('2020-01-01'), 10, $createdUsers[4], $createdDepartments[97]],
+        ];
+        $createdBeautySalons = [];
+        foreach ($beautySalons as [$name, $street, $zipCode, $city, $openingDate, $numberEmployeeFulltime, $manager, $department]) {
+            $beautySalon = new BeautySalon();
+            $beautySalon->setName($name);
+            $beautySalon->setStreet($street);
+            $beautySalon->setZipCode($zipCode);
+            $beautySalon->setCity($city);
+            $beautySalon->setOpeningDate($openingDate);
+            $beautySalon->setNumberEmployeeFulltime($numberEmployeeFulltime);
+            $beautySalon->setManager($manager);
+            $beautySalon->setDepartment($department);
+            $objectManager->persist($beautySalon);
+            $createdBeautySalons[] = $beautySalon;
+        }
+
+        $incomes = [
+            [$createdBeautySalons[0],"10000", new \DateTimeImmutable("2025-03-01"), 2, 2025],
+            [$createdBeautySalons[1],"12000", new \DateTimeImmutable("2025-03-01"), 2, 2025],
+            [$createdBeautySalons[2],"15000", new \DateTimeImmutable("2025-03-01"), 2, 2025],
+            [$createdBeautySalons[3],"18000", new \DateTimeImmutable("2025-03-01"), 2, 2025],
+            [$createdBeautySalons[4],"20000", new \DateTimeImmutable("2025-03-01"), 2, 2025],
+            [$createdBeautySalons[0],"13000", new \DateTimeImmutable("2025-02-01"), 1, 2025],
+            [$createdBeautySalons[1],"16000", new \DateTimeImmutable("2025-02-01"), 1, 2025],
+            [$createdBeautySalons[2],"19000", new \DateTimeImmutable("2025-02-01"), 1, 2025],
+            [$createdBeautySalons[3],"21000", new \DateTimeImmutable("2025-02-01"), 1, 2025],
+            [$createdBeautySalons[4],"11000", new \DateTimeImmutable("2025-02-01"), 1, 2025]
+        ];
+        foreach ($incomes as [$beautySalon, $incomeAmount, $dateIncome, $month, $year]) {
+            if (!$beautySalon instanceof BeautySalon) {
+                throw new \InvalidArgumentException('beautySalon must be an instance of BeautySalon');
+            }
+            $income = new Income();
+            $income->setBeautysalon($beautySalon);
+            $income->setIncome($incomeAmount);
+            $income->setCreatedAt($dateIncome);
+            $income->setMonthIncome($month);
+            $income->setYearIncome($year);
+            $objectManager->persist($income);
+        };
+
+        $statistics = [
+            [null, null, "France", 2025, 1, 15000],
+            [null, null, "France", 2025, 2, 16000],
+            [$createdDepartments[50],null, 'Departement', 2025, 1, 10000 ],
+            [$createdDepartments[50],null, 'Departement', 2025, 2, 13000 ],
+            [$createdDepartments[9],null, 'Departement', 2025, 1, 15000 ],
+            [$createdDepartments[9],null, 'Departement', 2025, 2, 16000 ],
+            [$createdDepartments[98],null, 'Departement', 2025, 1, 15000 ],
+            [$createdDepartments[98],null, 'Departement', 2025, 2, 19000 ],
+            [$createdDepartments[70],null, 'Departement', 2025, 1, 18000 ],
+            [$createdDepartments[70],null, 'Departement', 2025, 2, 21000 ],
+            [$createdDepartments[97],null, 'Departement', 2025, 1, 20000 ],
+            [$createdDepartments[97],null, 'Departement', 2025, 2, 11000 ],
+            [null, $createdRegions[9], 'Region', 2025, 1, 10000 ],
+            [null, $createdRegions[9], 'Region', 2025, 2, 13000 ],
+            [null, $createdRegions[0], 'Region', 2025, 1, 12000 ],
+            [null, $createdRegions[0], 'Region', 2025, 2, 16000 ],
+            [null, $createdRegions[17], 'Region', 2025, 1, 17500 ],
+            [null, $createdRegions[17], 'Region', 2025, 2, 15000 ],
+            [null, $createdRegions[14], 'Region', 2025, 1, 18000 ],
+            [null, $createdRegions[14], 'Region', 2025, 2, 21000 ]
+        ];
+        $uniqueStatistics = [];
+        foreach ($statistics as [$department, $region, $area, $year, $month, $income]) {
+            $key = serialize([$department, $region, $area, $year, $month]);
+            if (!isset($uniqueStatistics[$key])) {
+                $uniqueStatistics[$key] = [$department, $region, $area, $year, $month, $income];
+            }
+        }
+        foreach ($uniqueStatistics as $statistic) {
+            $statisticEntity = new Statistic();
+            $statisticEntity->setDepartment($statistic[0]);
+            $statisticEntity->setRegion($statistic[1]);
+            $statisticEntity->setArea($statistic[2]);
+            $statisticEntity->setYear($statistic[3]);
+            $statisticEntity->setMonth($statistic[4]);
+            $statisticEntity->setAverageIncome($statistic[5]);
+            $objectManager->persist($statisticEntity);
+        }
+        $objectManager->flush();
     }
 }
