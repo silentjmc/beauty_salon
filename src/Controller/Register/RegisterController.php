@@ -15,13 +15,12 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
-use Symfony\Component\Validator\Exception\ValidationFailedException;
 
 final class RegisterController extends AbstractController{
     #[Route('/api/register', name: 'app_api_register', methods: ['POST'])]
     public function register(Request $request, UserPasswordHasherInterface $userPasswordHasher, EntityManagerInterface $entityManager, MailerInterface $mailer, ValidatorInterface $validator): JsonResponse {
-        // Décoder les données JSON envoyées dans la requête
-        $content = $request->getContent(); // Récupère le contenu brut de la requête
+        // Decode the JSON data sent in the request
+        $content = $request->getContent(); 
         $data = json_decode($content, true);
         $errorMessages = [];
         $requiredFields = [
