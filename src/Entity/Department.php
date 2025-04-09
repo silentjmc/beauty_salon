@@ -28,8 +28,8 @@ class Department
     #[ORM\JoinColumn(nullable: false)]
     private ?Region $region = null;
 
-    #[ORM\OneToOne(mappedBy: 'department', cascade: ['persist', 'remove'])]
-    private ?Statistic $statistic = null;
+    #[ORM\OneToMany(mappedBy: 'department', targetEntity: Statistic::class)]
+    private Collection $statistics;
 
     #[ORM\Column(length: 3)]
     private ?string $code = null;
@@ -37,6 +37,7 @@ class Department
     public function __construct()
     {
         $this->beautySalons = new ArrayCollection();
+        $this->statistics = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -98,25 +99,30 @@ class Department
         return $this;
     }
 
-    public function getStatistic(): ?Statistic
+    public function getStatistics(): Collection
     {
-        return $this->statistic;
+        return $this->statistics;
     }
-
-    public function setStatistic(?Statistic $statistic): static
+    
+    public function addStatistic(Statistic $statistic): self
     {
-        // unset the owning side of the relation if necessary
-        if ($statistic === null && $this->statistic !== null) {
-            $this->statistic->setDepartment(null);
-        }
-
-        // set the owning side of the relation if necessary
-        if ($statistic !== null && $statistic->getDepartment() !== $this) {
+        if (!$this->statistics->contains($statistic)) {
+            $this->statistics[] = $statistic;
             $statistic->setDepartment($this);
         }
-
-        $this->statistic = $statistic;
-
+    
+        return $this;
+    }
+    
+    public function removeStatistic(Statistic $statistic): self
+    {
+        if ($this->statistics->removeElement($statistic)) {
+            // set the owning side to null (unless already changed)
+            if ($statistic->getDepartment() === $this) {
+                $statistic->setDepartment(null);
+            }
+        }
+    
         return $this;
     }
 

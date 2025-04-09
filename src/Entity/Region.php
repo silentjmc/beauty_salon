@@ -24,12 +24,13 @@ class Region
     #[ORM\OneToMany(targetEntity: Department::class, mappedBy: 'region')]
     private Collection $departments;
 
-    #[ORM\OneToOne(mappedBy: 'region', cascade: ['persist', 'remove'])]
-    private ?Statistic $statistic = null;
+    #[ORM\OneToMany(mappedBy: 'region', targetEntity: Statistic::class)]
+    private Collection $statistics;
 
     public function __construct()
     {
         $this->departments = new ArrayCollection();
+        $this->statistics = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -79,25 +80,30 @@ class Region
         return $this;
     }
 
-    public function getStatistic(): ?Statistic
+    public function getStatistics(): Collection
     {
-        return $this->statistic;
+        return $this->statistics;
     }
-
-    public function setStatistic(?Statistic $statistic): static
+    
+    public function addStatistic(Statistic $statistic): self
     {
-        // unset the owning side of the relation if necessary
-        if ($statistic === null && $this->statistic !== null) {
-            $this->statistic->setRegion(null);
-        }
-
-        // set the owning side of the relation if necessary
-        if ($statistic !== null && $statistic->getRegion() !== $this) {
+        if (!$this->statistics->contains($statistic)) {
+            $this->statistics[] = $statistic;
             $statistic->setRegion($this);
         }
-
-        $this->statistic = $statistic;
-
+    
+        return $this;
+    }
+    
+    public function removeStatistic(Statistic $statistic): self
+    {
+        if ($this->statistics->removeElement($statistic)) {
+            // set the owning side to null (unless already changed)
+            if ($statistic->getRegion() === $this) {
+                $statistic->setRegion(null);
+            }
+        }
+    
         return $this;
     }
 }

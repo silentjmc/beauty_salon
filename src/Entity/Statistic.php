@@ -25,10 +25,10 @@ class Statistic
     #[ORM\Column]
     private ?float $averageIncome = null;
 
-    #[ORM\OneToOne(inversedBy: 'statistic', cascade: ['persist', 'remove'])]
+    #[ORM\ManyToOne(targetEntity: Department::class)]
     private ?Department $department = null;
 
-    #[ORM\OneToOne(inversedBy: 'statistic', cascade: ['persist', 'remove'])]
+    #[ORM\ManyToOne(targetEntity: Region::class)]
     private ?Region $region = null;
 
     public function getId(): ?int
