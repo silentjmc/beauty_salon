@@ -14,29 +14,58 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+/**
+ * New Income Controller
+ * 
+ * This controller handles the API endpoint for creating new income records
+ * for beauty salons and updating related statistical data.
+ */
 final class NewIncomeController extends AbstractController{
+    /**
+     * Create a new income record for the previous month
+     * 
+     * This endpoint allows salon managers to register income for the previous month.
+     * It performs the following operations:
+     * - Validates user authentication and salon association
+     * - Checks if income has already been submitted for the previous month
+     * - Validates the income data provided in the request
+     * - Creates a new income record for the salon
+     * - Updates statistical average income data for France, the salon's department,
+     *   and the salon's region
+     * 
+     * @param Request $request The HTTP request containing income data in JSON format
+     *                         Expected format: {"income": 1234.56}
+     * @param EntityManagerInterface $entityManager The Doctrine entity manager for database operations
+     * @return JsonResponse The JSON response with the result of the operation or error messages
+     * 
+     * @throws \Exception If data validation or database operations fail
+     * 
+     * @Route("/api/new_income", name="app_new_income", methods={"POST"})
+     * @IsGranted("IS_AUTHENTICATED_FULLY")
+     */
     #[Route('/api/new_income', name: 'app_new_income',  methods: ['POST'])]
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function newIncome(Request $request, EntityManagerInterface $entityManager): JsonResponse {
-        // Get the current user
+        // Get the authenticated user and verify it's a User instance
         $user = $this->getUser();
         if (!$user instanceof User) {
             return new JsonResponse(['error' => 'User not authenticated'], Response::HTTP_UNAUTHORIZED);
         }
 
-        // Verify if the user is a manager of a beauty salon
+        // Find the beauty salon managed by the user
+        // This ensures the user can only add income for their own salon
         $salon = $entityManager->getRepository(BeautySalon::class)->findOneBy(['manager' => $user]);
         if (!$salon) {
             return new JsonResponse(['error' => 'No beauty salon found for this user'], Response::HTTP_NOT_FOUND);
         }
 
-        // Get the current date and calculate the previous month
+        // Calculate the previous month and year for income registration
         $now = new \DateTimeImmutable();
         $previousMonth = $now->modify('-1 month');
         $month_income = $previousMonth->format('m');
         $year_income = $previousMonth->format('Y');
 
-        // Verify if the income for the previous month already exists
+        // Check if income has already been submitted for this month
         $existingIncome = $entityManager->getRepository(Income::class)->findOneBy([
             'beautySalon' => $salon,
             'monthIncome' => $month_income,
@@ -49,17 +78,17 @@ final class NewIncomeController extends AbstractController{
             ], Response::HTTP_CONFLICT);
         }
 
+        // Parse and validate the income data from the request
         $content = $request->getContent();
         $data = json_decode($content, true);
 
-        // Verify if the data is valid
         if (!$data || !isset($data['income']) || !is_numeric($data['income'])) {
             return new JsonResponse([
                 'error' => 'Invalid data. Income amount is required and must be a number'
             ], Response::HTTP_BAD_REQUEST);
         }
 
-        //Create a new income entry
+        // Create and persist the new income record
         $income = new Income();
         $income->setIncome((float)$data['income']);
         $income->setMonthIncome($month_income);
@@ -70,11 +99,12 @@ final class NewIncomeController extends AbstractController{
         $entityManager->persist($income);
         $entityManager->flush();
 
-        // Update the average income for France, salon's department, and salon's region
+        // Update statistical averages at different geographical levels
         $this->updateAverageIncomeForArea($entityManager, $income, 'France', $month_income, $year_income);
         $this->updateAverageIncomeForArea($entityManager, $income, 'Department', $month_income, $year_income);
         $this->updateAverageIncomeForArea($entityManager, $income, 'Region', $month_income, $year_income);
 
+        // Return success response with income details
         return new JsonResponse([
             'message' => 'Income successfully recorded for ' . $previousMonth->format('m/Y'),
             'income' => [
@@ -88,30 +118,54 @@ final class NewIncomeController extends AbstractController{
         ], Response::HTTP_CREATED);
     }
 
-    // This method updates the average income for a specific area (France, Department, or Region)
+   /**
+     * Update the average income statistics for a specific area
+     * 
+     * This method calculates and updates or creates the average income statistics
+     * for a given area (France, Department, or Region) based on all salons' income
+     * for the specified month and year. If statistics already exist for the area
+     * and time period, they are updated; otherwise, a new statistic record is created.
+     * 
+     * The method handles three levels of statistical aggregation:
+     * - National level (France): Average income across all salons in France
+     * - Regional level: Average income limited to salons in the specified region
+     * - Departmental level: Average income limited to salons in the specified department
+     * 
+     * @param EntityManagerInterface $entityManager The Doctrine entity manager for database operations
+     * @param Income $income The newly created income record that triggered this update
+     * @param string $area The area type ('France', 'Department', or 'Region')
+     * @param string $month The month number (01-12) for which statistics are being updated
+     * @param string $year The year (e.g., '2025') for which statistics are being updated
+     * @return void
+     * 
+     * @throws \Doctrine\ORM\NoResultException If the query returns no results when calculating averages
+     * @throws \Doctrine\ORM\NonUniqueResultException If the query returns multiple results unexpectedly
+     */
     public function updateAverageIncomeForArea(EntityManagerInterface $entityManager, Income $income, string $area, string $month, string $year): void
     {
-        // Get the beauty salon, department, and region from the income entity
+        // Get salon details and its associated department and region
         $salon = $income->getBeautySalon();
         $department = $salon->getDepartment();
         $region = $department->getRegion();
 
-        //List of criteria to find if the average income exists or not
+        // Set up search criteria based on the area type
         $criteria = [
             'area' => $area,
             'month' => $month,
             'year' => $year
         ];
 
+        // Add specific criteria for department or region
         if ($area === 'Department') {
             $criteria['department'] = $department;
         } elseif ($area === 'Region') {
             $criteria['region'] = $region;
         }
 
+        // Check if statistics for this area and period already exist
         $existingAverageIncome = $entityManager->getRepository(Statistic::class)->findOneBy($criteria);
 
-        // Calculate the average income for the specified area
+        // Build query to calculate average income for the area
         $avgIncome = $entityManager->createQueryBuilder()
         ->select('AVG(i.income) as avg')
         ->from(Income::class, 'i')
@@ -121,6 +175,7 @@ final class NewIncomeController extends AbstractController{
         ->setParameter('monthIncome', $month)
         ->setParameter('yearIncome', $year);
 
+        // Filter by department or region if applicable
         if ($area === 'Department') {
             $avgIncome->andWhere('s.department = :department')
                 ->setParameter('department', $department);
@@ -130,18 +185,21 @@ final class NewIncomeController extends AbstractController{
                 ->setParameter('region', $region);
         }
 
+        // Execute query to get average income
         $avgIncome = $avgIncome->getQuery()->getSingleScalarResult();
 
-        // Update or create the average income entry
+         // Update existing statistic or create a new one
         if ($existingAverageIncome) {
             $existingAverageIncome->setAverageIncome($avgIncome);
         } else {
+            // Create new statistic record with calculated average
             $stat = new Statistic();
             $stat->setArea($area);
             $stat->setMonth($month);
             $stat->setYear($year);
             $stat->setAverageIncome($avgIncome);
     
+            // Set department or region reference if applicable
             if ($area === 'Department') {
                 $stat->setDepartment($department);
             } elseif ($area === 'Region') {
@@ -150,7 +208,7 @@ final class NewIncomeController extends AbstractController{
     
             $entityManager->persist($stat);
         }
-    
+        // Persist changes to database
         $entityManager->flush();
     }
 }
