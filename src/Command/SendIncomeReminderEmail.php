@@ -15,6 +15,13 @@ use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Twig\Environment;
 
+/**
+ * Command to send reminder emails for missing income submissions
+ * 
+ * This command checks all salon managers and sends reminder emails to those
+ * who have not submitted their income reports for the previous month.
+ * It's designed to be run as a scheduled task/cron job at the beginning of each month.
+ */
 #[AsCommand(
     name: 'app:send-income-reminders',
     description: 'Sends a reminder email to salon managers who didn’t submit income for the previous month.',
@@ -26,6 +33,17 @@ class SendIncomeReminderEmail extends Command
     private string $senderEmail;
     private Environment $twig;
 
+        /**
+     * Constructor for SendIncomeReminderEmail command
+     * 
+     * Initializes the command with necessary dependencies for database access,
+     * email sending capabilities, and template rendering.
+     * 
+     * @param EntityManagerInterface $entityManager For database operations
+     * @param MailerInterface $mailer For sending emails
+     * @param Environment $twig For rendering email templates
+     * @param string $senderEmail Email address used as the sender
+     */
     public function __construct(
         EntityManagerInterface $entityManager,
         MailerInterface $mailer,
@@ -39,6 +57,19 @@ class SendIncomeReminderEmail extends Command
         $this->senderEmail = $senderEmail;
     }
 
+    /**
+     * Executes the command logic
+     * 
+     * This method is the entry point for the command execution. It:
+     * 1. Determines the previous month to check for missing income submissions
+     * 2. Retrieves all salons from the database
+     * 3. Checks each salon for missing income submissions
+     * 4. Sends reminder emails to managers with missing submissions
+     * 
+     * @param InputInterface $input Command input
+     * @param OutputInterface $output Command output
+     * @return int Command exit code (SUCCESS or FAILURE)
+     */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
@@ -67,6 +98,7 @@ class SendIncomeReminderEmail extends Command
                 'yearIncome' => $yearIncome
             ]);
 
+            // If no income submission found, send reminder email
             if (!$incomeExists) {
                 $manager = $salon->getManager();
                 if ($manager) {
@@ -76,69 +108,40 @@ class SendIncomeReminderEmail extends Command
             }
         }
 
+        // Finalize progress bar and show success message
         $io->progressFinish();
         $io->success("Sent $reminderCount reminders to salon managers.");
 
         return Command::SUCCESS;
     }
 
+    /**
+     * Sends a reminder email to a salon manager
+     * 
+     * This method generates and sends an email to remind a salon manager
+     * to submit their income report for the specified month.
+     * 
+     * @param User $manager The salon manager receiving the reminder
+     * @param BeautySalon $salon The salon with missing income submission
+     * @param string $formattedMonth The month (formatted as "Month Year") for which income submission is required
+     * @return void
+     */
     private function sendReminderEmail(User $manager, BeautySalon $salon, string $formattedMonth): void
     {
+        // Render email body using Twig template
         $emailBody = $this->twig->render('email/income_reminder.html.twig', [
             'managerName' => $manager->getManagerLastName(),
             'salonName' => $salon->getName(),
             'formattedMonth' => $formattedMonth
         ]);
         
+        // Create and configure email
         $email = (new Email())
             ->from($this->senderEmail)
             ->to($manager->getEmail())
             ->subject("Rappel - Saisie du chiffre d'affaires pour $formattedMonth")
             ->html($emailBody);
-            //->html($this->getEmailTemplate($manager->getManagerLastName(), $salon->getName(), $formattedMonth));
 
         $this->mailer->send($email);
     }
-/*
-    private function getEmailTemplate(string $managerName, string $salonName, string $formattedMonth): string
-    {
-        return <<<HTML
-<!DOCTYPE html>
-<html>
-<head>
-    <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background-color: #4A90E2; color: white; padding: 10px 20px; }
-        .content { padding: 20px; border: 1px solid #ddd; }
-        .footer { font-size: 12px; color: #777; margin-top: 20px; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>Rappel de saisie</h1>
-        </div>
-        <div class="content">
-            <p>Bonjour {$managerName},</p>
-            
-            <p>Nous vous rappelons que la saisie du chiffre d'affaires de votre salon <strong>{$salonName}</strong> 
-            pour le mois de <strong>{$formattedMonth}</strong> n'a pas encore été effectuée.</p>
-            
-            <p>Pour maintenir des statistiques précises et à jour, merci de bien vouloir saisir 
-            cette information dès que possible.</p>
-            
-            <p>Vous pouvez effectuer cette saisie en vous connectant à votre espace personnel.</p>
-            
-            <p>Cordialement,<br>
-            L'équipe BeautyStatistics</p>
-        </div>
-        <div class="footer">
-            <p>Ce message est envoyé automatiquement. Merci de ne pas y répondre.</p>
-        </div>
-    </div>
-</body>
-</html>
-HTML;
-    }*/
 }
