@@ -18,29 +18,29 @@ Vous intervenez sur tout le développement back-end, de la conceptualisation à 
 L'application doit comporter les fonctionnalités suivantes:  
 ✓ Un système d'authentification JWT et d'inscription (email + password) avec confirmation d'email  
 → Livrables:  
-    • un endpoint “register” qui gère l'ajout d'un nouvel utilisateur en BDD  
-    • un endpoint “login” qui authentifie l'utilisateur en renvoyant un token qui sera ré-utilisé pour authentifier chaque requête suivante  
-    • un email envoyé lors de l'inscription  
-    • Les mots de passe des utilisateurs doivent être stockés chiffrés.  
-    • Mot de passe: Au moins 8 caractères, une majuscule, un chiffre et un caractère spécial. La réponse de l'api devra être différente en fonction du type de caractère manquant lors de l'enregistrement d'un nouvel utilisateur.  
+* un endpoint “register” qui gère l'ajout d'un nouvel utilisateur en BDD  
+* un endpoint “login” qui authentifie l'utilisateur en renvoyant un token qui sera ré-utilisé pour authentifier chaque requête suivante  
+* un email envoyé lors de l'inscription  
+* Les mots de passe des utilisateurs doivent être stockés chiffrés.  
+* Mot de passe: Au moins 8 caractères, une majuscule, un chiffre et un caractère spécial. La réponse de l'api devra être différente en fonction du type de caractère manquant lors de l'enregistrement d'un nouvel utilisateur.  
 
 ✓ un espace personnel (profil du salon + accès à l'historique de saisie des mois passés + saisie du mois précédent)  
 → Livrables:  
-    • un endpoint “profil” qui gère l'accès et la modification des données du profil authentifié uniquement  
-    • un endpoint “historique” qui permet l'accès aux CA saisis précédemment  
-    • un endpoint “nouvelle saisie” qui gère la saisie du CA du mois précédent  
+* un endpoint “profil” qui gère l'accès et la modification des données du profil authentifié uniquement  
+* un endpoint “historique” qui permet l'accès aux CA saisis précédemment  
+* un endpoint “nouvelle saisie” qui gère la saisie du CA du mois précédent  
 
 ✓ Un système de rappel par mail pour la saisie du mois passé  
 → Livrable:  
-    • Tâche CRON (ou autre scheduler) qui envoie un rappel par mail aux utilisateurs n'ayant pas saisi de CA pour le mois précédent (à partir du 5 du mois par exemple)  
+* Tâche CRON (ou autre scheduler) qui envoie un rappel par mail aux utilisateurs n'ayant pas saisi de CA pour le mois précédent (à partir du 5 du mois par exemple)  
 
 ✓ Une base de données SQL  
 → Livrable:  
-    • une BDD SQL sur laquelle s'appuie l'API, les schémas sont à la discrétion des élèves avec une contrainte : pas de redondance d'information  
+* une BDD SQL sur laquelle s'appuie l'API, les schémas sont à la discrétion des élèves avec une contrainte : pas de redondance d'information  
 
 ✓ Mise à jour des statistiques du marché après chaque saisie (CA moyen France, CA moyen / Régions, CA moyen / Départements)  
 → Livrable:  
-    • les statistiques doivent être recalculées après chaque appel au endpoint “nouvelle saisie”uniquement pour la région et le département en question (Ex : si la saisie correspond à l'IDF, ne pas recalculer la moyenne de la Bretagne).  
+* les statistiques doivent être recalculées après chaque appel au endpoint “nouvelle saisie”uniquement pour la région et le département en question (Ex : si la saisie correspond à l'IDF, ne pas recalculer la moyenne de la Bretagne).  
 
 Le nom des endpoints ainsi que des fonctions n'est pas imposé mais doit être explicite.  
 Le code devra être documenté pour faciliter la maintenance par d'autres développeurs. (des docstrings au format recommandé documentent chaque fonction)  
@@ -120,12 +120,12 @@ php bin/console doctrine:fixtures:load
 
 #### Base de données
 La base de données contient les tables suivantes :
-    * user - Informations des utilisateurs
-    * beauty_salon - Informations des salons
-    * department - Départements français
-    * region - Régions françaises
-    * income - Historique des chiffres d'affaires
-    * statistic - Statistiques par région/département/France
+* user - Informations des utilisateurs
+* beauty_salon - Informations des salons
+* department - Départements français
+* region - Régions françaises
+* income - Historique des chiffres d'affaires
+* statistic - Statistiques par région/département/France
 
 #### Fonctionnalités principales
 1. Inscription et authentification
