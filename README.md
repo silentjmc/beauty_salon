@@ -4,8 +4,8 @@
 
 ### 1. Présentation du client et son contexte  
 Le client est un entrepreneur qui souhaite lancer sa startup digitale.
-Il a trouvé dans son entourage un besoin non comblé et il souhaite être le premier à satisfaire ce besoin chez ses futurs clients.
-Son marché est celui des salons d'esthétique. Il s'est rendu compte qu'il est extrêmement difficile d'accéder à des données à jour concernant le chiffre d'affaires des salons de beauté en France.
+Il a trouvé dans son entourage un besoin non comblé et il souhaite être le premier à satisfaire ce besoin chez ses futurs clients.  
+Son marché est celui des salons d'esthétique. Il s'est rendu compte qu'il est extrêmement difficile d'accéder à des données à jour concernant le chiffre d'affaires des salons de beauté en France.  
 Le client n'a aucune infrastructure informatique. Il est prêt à payer pour un serveur privé virtuel (VPS) ainsi que pour l'achat du nom de domaine.
 
 ### 2. Expression du besoin
