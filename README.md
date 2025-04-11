@@ -2,13 +2,13 @@
 
 ## Présentation du contexte du cahier des charges
 
-1. Présentation du client et son contexte
+### 1. Présentation du client et son contexte  
 Le client est un entrepreneur qui souhaite lancer sa startup digitale.
 Il a trouvé dans son entourage un besoin non comblé et il souhaite être le premier à satisfaire ce besoin chez ses futurs clients.
 Son marché est celui des salons d'esthétique. Il s'est rendu compte qu'il est extrêmement difficile d'accéder à des données à jour concernant le chiffre d'affaires des salons de beauté en France.
 Le client n'a aucune infrastructure informatique. Il est prêt à payer pour un serveur privé virtuel (VPS) ainsi que pour l'achat du nom de domaine.
 
-2. Expression du besoin
+### 2. Expression du besoin
 Le client souhaite que vous développiez la partie API back-end d'une application web qui permettra à un salon de beauté d'indiquer son chiffre d'affaires plus ou moins précisément, et d'avoir accès en échange à son positionnement parmi ses concurrents.
 Le gérant du salon de beauté doit pouvoir se connecter à un espace personnel.
 Les données doivent être reportées automatiquement.
